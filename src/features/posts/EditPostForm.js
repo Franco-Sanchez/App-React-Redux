@@ -1,29 +1,47 @@
-import React from 'react';
-import { useEffect, useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { useHistory } from 'react-router';
-import { updatePost } from './postsSlice';
-
+import React from 'react'
+import { useEffect, useState } from 'react'
+import { useDispatch, useSelector } from 'react-redux'
+import { useHistory } from 'react-router'
+import { updatePost } from './postsSlice'
+import { selectPostById } from './postsSlice'
 
 function EditPostForm({ match }) {
-  const { postId } = match.params;
-  const history = useHistory();
+  const { postId } = match.params
+  const history = useHistory()
 
-  const post = useSelector(state => state.posts.list.find(post => post.id === postId))
-  const [formData, setFormData] = useState({ id: post.id, title: post.title, content: post.content })
-  const [isDisable, setIsDisable] = useState(true);
+  const post = useSelector((state) => selectPostById(state, postId))
 
-  const dispatch = useDispatch();
+  const [formData, setFormData] = useState({
+    id: post.id,
+    date: post.date,
+    user: post.user,
+    title: post.title,
+    content: post.content,
+    reactions: post.reactions,
+  })
+  const [isDisable, setIsDisable] = useState(true)
 
-  const handleChange = ({name, value}) => setFormData({ ...formData, [name]: value })
+  const dispatch = useDispatch()
+
+  const handleChange = ({ name, value }) =>
+    setFormData({ ...formData, [name]: value })
 
   const handleSubmit = () => {
-    dispatch(updatePost(formData.id, formData.title, formData.content))
+    dispatch(
+      updatePost(
+        formData.id,
+        formData.date,
+        formData.user,
+        formData.title,
+        formData.content,
+        formData.reactions
+      )
+    )
     history.push(`/posts/${post.id}`)
   }
-  
+
   useEffect(() => {
-    setIsDisable(!formData.title || !formData.content);
+    setIsDisable(!formData.title || !formData.content)
   }, [formData])
 
   return (
@@ -36,19 +54,21 @@ function EditPostForm({ match }) {
           id="postTitle"
           placeholder="What's on your mind?"
           value={formData.title}
-          onChange={ (e) => handleChange(e.target) }
+          onChange={(e) => handleChange(e.target)}
         />
         <label htmlFor="postContent">Content:</label>
-        <textarea 
+        <textarea
           name="content"
           id="postContent"
           value={formData.content}
-          onChange={ (e) => handleChange(e.target) }
+          onChange={(e) => handleChange(e.target)}
         />
-        <button disabled={isDisable} type="button" onClick={handleSubmit}>Save Post</button>
+        <button disabled={isDisable} type="button" onClick={handleSubmit}>
+          Save Post
+        </button>
       </form>
     </section>
   )
 }
 
-export default EditPostForm;
+export default EditPostForm

@@ -1,25 +1,36 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { addPost } from './postsSlice';
-import { nanoid } from '@reduxjs/toolkit';
+import { addNewPost } from './postsSlice';
+import { unwrapResult } from '@reduxjs/toolkit';
 
 function AddPostForm() {
-  const [formData, setFormData] = useState({ id: nanoid(), user: '', title: '', content: '' })
+  const [formData, setFormData] = useState({ user: '', title: '', content: '' })
   const [isDisable, setIsDisable] = useState(true);
+  const [addRequestStatus, setAddRequestStatus] = useState('idle');
 
   const users = useSelector(state => state.users.list);
   const dispatch = useDispatch();
 
   const handleChange = ({ name, value }) => setFormData({ ...formData, [name]: value })
 
-  const handleSubmit = () => {
-    dispatch(addPost(formData.user, formData.title, formData.content))
-    setFormData({ id: nanoid(), user: '', title:'', content: '' })
+  const handleSubmit = async () => {
+    if(!isDisable) {
+      try {
+      setAddRequestStatus('pending');
+      const resultAction = await dispatch(addNewPost(formData));
+      unwrapResult(resultAction);
+      setFormData({ user: '', title:'', content: '' }) 
+      } catch (e) {
+        console.error(`Failed to save the post: ${e}`)
+      } finally {
+        setAddRequestStatus('idle')
+      }
+    }
   }
 
   useEffect(() => {
-    setIsDisable(!formData.user || !formData.title || !formData.content)
-  }, [formData])
+    setIsDisable((!formData.user || !formData.title || !formData.content) && addRequestStatus === 'idle')
+  }, [formData, addRequestStatus])
 
   const userOptions = users.map(user => <option key={user.id} value={user.id}>{ user.name }</option>)
 
@@ -30,6 +41,7 @@ function AddPostForm() {
         <label htmlFor="postTitle">Post Title:</label>
         <input 
           name="title"
+          placeholder="What's on your mind?"
           id="postTitle"
           value={formData.title}
           onChange={(e) => handleChange(e.target)}
